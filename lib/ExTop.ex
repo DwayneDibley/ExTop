@@ -6,8 +6,7 @@ defmodule ExTop do
   # import WinInfo
 
   @moduledoc """
-  A demo of the WxWindows DSL for creating GUIs.
-
+  A WxWindows top implementation
   """
 
   @doc """
