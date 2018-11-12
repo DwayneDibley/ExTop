@@ -22,7 +22,7 @@ defmodule WxWindow do
   end
 
   # def show(how \\ true) do
-  #   {_, _, frame} = WinInfo.get_by_name(:__main_frame__)
+  #   frame = WinInfo.getWxObject(:__main_frame__)
   #   :wxFrame.show(frame)
   # end
 end

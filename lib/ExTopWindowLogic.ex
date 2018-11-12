@@ -2,23 +2,25 @@ defmodule WxTopWindowLogic do
   require Logger
   use WxDefines
 
-@moduledoc """
+  @moduledoc """
 
-"""
+  """
   def init({action, state}) do
     display()
     {action, state, 1000}
   end
 
-@doc """
-Get the process data from the beam engine and display it.
-"""
+  @doc """
+  Get the process data from the beam engine and display it.
+  """
   def display() do
     {sortCol, how} = getSettings()
     listCtrl = WinInfo.getWxObject(:list_ctrl)
 
-    #
+    # Get the beam engine per procews data
     procData = getProcessData(sortCol, how)
+    nProcs = length(procData)
+    WxStatusBar.setText("#{nProcs} processes")
 
     # Freeze the window during the update
     :wxWindow.freeze(listCtrl)

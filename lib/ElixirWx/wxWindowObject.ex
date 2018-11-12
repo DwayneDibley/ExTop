@@ -225,7 +225,7 @@ defmodule WxWinObj do
   @impl true
   def handle_cast({:show, _how}, state) do
     Logger.info("Show!!")
-    {_, _, frame} = WinInfo.get_by_name(:__main_frame__)
+    frame = WinInfo.getWxObject(:__main_frame__)
     :wxFrame.show(frame)
     {:noreply, state}
   end
@@ -255,7 +255,7 @@ defmodule WxWinObj do
     send(state[:parent], {state[:winName], :child_window_closed, "Close window event"})
 
     # WxFunctions.closeWindow(state[:window])
-    {_, _, frame} = WinInfo.get_by_name(:__main_frame__)
+    frame = WinInfo.getWxObject(:__main_frame__)
     :wxEvtHandler.disconnect(frame)
     :wxWindow.destroy(frame)
     {:stop, :normal, "#{inspect(state[:winName])} - Close window event"}
