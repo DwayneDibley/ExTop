@@ -49,19 +49,17 @@ defmodule WxDsl do
         "mainWindow #{inspect(self())} +++++++++++++++++++++++++++++++++++++++++++++++++++++"
       )
 
-      # Logger.info("WxDsl.mainWindow(#{inspect(unquote(attributes))})")
       # Get the function attributes
       opts = get_opts_map(unquote(attributes))
-      # Logger.info("main windows options = #{inspect(unquote(attributes))}")
 
       # Create the window storage
-      new_table()
+      WinInfo.createInfoTable()
 
       # Create a new wxObject for the window
       wx = :wx.new()
 
       # put_info( :window, wx)
-      put_table({:window, -1, wx})
+      WinInfo.insert({:window, -1, wx})
 
       # execute the function body
       stack_push({wx, nil, nil})
@@ -73,7 +71,7 @@ defmodule WxDsl do
       focus = Map.get(opts, :setFocus, false)
       parent = Map.get(opts, :parent, nil)
 
-      {_, _, frame} = WinInfo.get_by_name(:__main_frame__)
+      frame = WinInfo.getWxObject(:__main_frame__)
 
       case show do
         [show: true] ->
@@ -101,15 +99,7 @@ defmodule WxDsl do
       #  parent -> send(parent, {:window_open, __ENV__.module, self()})
       # end
 
-      # Loop despatching events as they arrive
-      # WxEvents.windowEventLoop(__ENV__.module)
-
-      # case parent do
-      #  nil -> nil
-      #  parent -> send(parent, {:window_closed, __ENV__.module, self()})
-      # end
-
-      table_name()
+      # table_name()
     end
   end
 
@@ -291,7 +281,7 @@ defmodule WxDsl do
           # xSizer:add(Sizer, ListBox, [{flag, ?wxEXPAND}])
       end
 
-      put_table({id, new_id, bt})
+      WinInfo.insert({id, new_id, bt})
 
       Logger.debug("Button -----------------------------------------------------")
     end
@@ -344,7 +334,7 @@ defmodule WxDsl do
           :wxStaticBoxSizer.add(sizer, bt, layout)
       end
 
-      put_table({id, new_id, bt})
+      WinInfo.insert({id, new_id, bt})
 
       Logger.debug("Button/1 -----------------------------------------------------")
     end
@@ -373,7 +363,7 @@ defmodule WxDsl do
         }"
       )
 
-      put_table({unquote(eventType), new_id, nil})
+      WinInfo.insert({unquote(eventType), new_id, nil})
       Logger.debug("Event  --------------------------------------------------")
     end
   end
@@ -382,7 +372,7 @@ defmodule WxDsl do
     quote do
       Logger.debug("Event ++++++++++++++++++++++++++++++++++++++++++++++++++")
 
-      # put_table({Map.get(opts, :id, :unknown), new_id, mi})
+      # WinInfo.insert({Map.get(opts, :id, :unknown), new_id, mi})
       put_info(var!(info, Dsl), unquote(eventType), unquote(callBack))
 
       # WinInfo.get_by_name( name)
@@ -401,7 +391,7 @@ defmodule WxDsl do
 
       :wxEvtHandler.connect(container, unquote(eventType), options)
 
-      put_table({unquote(eventType), new_id, unquote(callBack)})
+      WinInfo.insert({unquote(eventType), new_id, unquote(callBack)})
       Logger.debug("Event  --------------------------------------------------")
     end
   end
@@ -428,7 +418,7 @@ defmodule WxDsl do
 
       Logger.debug("  events: #{inspect(unquote(attributes))}")
 
-      {_, _, frame} = WinInfo.get_by_name(:__main_frame__)
+      frame = WinInfo.getWxObject(:__main_frame__)
       WxEvents.setEvents(__ENV__.module, frame, unquote(attributes))
       Logger.debug("Events -----------------------------------------------------")
     end
@@ -480,7 +470,7 @@ defmodule WxDsl do
       case container do
         # put_info(:__main_frame__, frame)
         {:wx_ref, _, :wx, _} ->
-          put_table({:__main_frame__, new_id, frame})
+          WinInfo.insert({:__main_frame__, new_id, frame})
 
         _ ->
           false
@@ -488,12 +478,12 @@ defmodule WxDsl do
 
       stack_push({frame, frame, nil})
 
-      put_table({Map.get(args_dict, :id, nil), new_id, frame})
+      WinInfo.insert({Map.get(args_dict, :id, nil), new_id, frame})
       # put_info(Map.get(args_dict, :id, nil), frame)
       # put_xref(new_id, Map.get(args_dict, :id, nil))
 
       unquote(block)
-      # put_table({Map.get(args_dict, :id, nil), new_id, frame})
+      # WinInfo.insert({Map.get(args_dict, :id, nil), new_id, frame})
       stack_pop()
       Logger.debug("Frame -----------------------------------------------------")
 
@@ -519,7 +509,7 @@ defmodule WxDsl do
 
       win = :wxHtmlWindow.new(parent, new_id, options)
 
-      put_table({id, new_id, win})
+      WinInfo.insert({id, new_id, win})
 
       WxSizer.addToSizer(win, sizer, restOpts)
       Logger.debug("htmlWindow/1 -----------------------------------------------------")
@@ -555,7 +545,7 @@ defmodule WxDsl do
 
       case id do
         :_no_id_ -> :ok
-        _ -> put_table({id, {width, height}, flags})
+        _ -> WinInfo.insert({id, {width, height}, flags})
       end
 
       Logger.debug("Layout ---------------------------------------------------")
@@ -564,68 +554,68 @@ defmodule WxDsl do
     end
   end
 
-  defmacro layout(layout, attributes) do
-    quote do
-      Logger.debug("layout2 ++++++++++++++++++++++++++++++++++++++++++++++++++")
-
-      # Logger.info("  layout/2 = #{inspect(unquote(layout))}, #{inspect(unquote(attributes))}")
-      {id, {width, height}, opts} = WinInfo.get_by_name(unquote(layout))
-      # Logger.info("  old layout = #{inspect({id, {width, height}, opts})}")
-
-      {new_id, {new_width, new_height}, new_opts} =
-        WxLayout.getLayoutAttributes(unquote(attributes))
-
-      # Logger.info("  new layout = #{inspect({new_id, {new_width, new_height}, new_opts})}")
-
-      width = replaceIfTrue(width, new_width != nil and new_width != width, new_width)
-      height = replaceIfTrue(height, new_height != nil and new_height != height, new_height)
-
-      # Logger.info("  after = #{inspect({width, height})}")
-
-      options = [
-        {:flag,
-         replaceIfTrue(
-           opts[:flag],
-           new_opts[:flag] != 0 and new_opts[:flag] != opts[:flag],
-           new_opts[:flag]
-         )}
-        | []
-      ]
-
-      options = [
-        {:border,
-         replaceIfTrue(
-           opts[:border],
-           new_opts[:border] != 0 and new_opts[:border] != opts[:border],
-           new_opts[:border]
-         )}
-        | options
-      ]
-
-      options = [
-        {:proportion,
-         replaceIfTrue(
-           opts[:proportion],
-           new_opts[:proportion] != 0 and new_opts[:proportion] != opts[:proportion],
-           new_opts[:proportion]
-         )}
-        | options
-      ]
-
-      #      # [flags: 2544, border: 1, proportion: 2]
-      # Logger.info("  options = #{inspect(options)}")
-      # Logger.info("  new layout = #{inspect({new_id, {width, height}, options})}")
-
-      case new_id do
-        :_no_id_ -> :ok
-        _ -> put_table({new_id, {width, height}, options})
-      end
-
-      Logger.debug("Layout2 ---------------------------------------------------")
-
-      {width, height, options}
-    end
-  end
+  # defmacro layout(layout, attributes) do
+  #   quote do
+  #     Logger.debug("layout2 ++++++++++++++++++++++++++++++++++++++++++++++++++")
+  #
+  #     # Logger.info("  layout/2 = #{inspect(unquote(layout))}, #{inspect(unquote(attributes))}")
+  #     {id, {width, height}, opts} = WinInfo.get_by_name(unquote(layout))
+  #     # Logger.info("  old layout = #{inspect({id, {width, height}, opts})}")
+  #
+  #     {new_id, {new_width, new_height}, new_opts} =
+  #       WxLayout.getLayoutAttributes(unquote(attributes))
+  #
+  #     # Logger.info("  new layout = #{inspect({new_id, {new_width, new_height}, new_opts})}")
+  #
+  #     width = replaceIfTrue(width, new_width != nil and new_width != width, new_width)
+  #     height = replaceIfTrue(height, new_height != nil and new_height != height, new_height)
+  #
+  #     # Logger.info("  after = #{inspect({width, height})}")
+  #
+  #     options = [
+  #       {:flag,
+  #        replaceIfTrue(
+  #          opts[:flag],
+  #          new_opts[:flag] != 0 and new_opts[:flag] != opts[:flag],
+  #          new_opts[:flag]
+  #        )}
+  #       | []
+  #     ]
+  #
+  #     options = [
+  #       {:border,
+  #        replaceIfTrue(
+  #          opts[:border],
+  #          new_opts[:border] != 0 and new_opts[:border] != opts[:border],
+  #          new_opts[:border]
+  #        )}
+  #       | options
+  #     ]
+  #
+  #     options = [
+  #       {:proportion,
+  #        replaceIfTrue(
+  #          opts[:proportion],
+  #          new_opts[:proportion] != 0 and new_opts[:proportion] != opts[:proportion],
+  #          new_opts[:proportion]
+  #        )}
+  #       | options
+  #     ]
+  #
+  #     #      # [flags: 2544, border: 1, proportion: 2]
+  #     # Logger.info("  options = #{inspect(options)}")
+  #     # Logger.info("  new layout = #{inspect({new_id, {width, height}, options})}")
+  #
+  #     case new_id do
+  #       :_no_id_ -> :ok
+  #       _ -> WinInfo.insert({new_id, {width, height}, options})
+  #     end
+  #
+  #     Logger.debug("Layout2 ---------------------------------------------------")
+  #
+  #     {width, height, options}
+  #   end
+  # end
 
   @doc """
   Create a WxListCtrl.
@@ -663,7 +653,7 @@ defmodule WxDsl do
       options = [{:winid, new_id} | options]
       lc = WxListCtrl.new(parent, options)
 
-      put_table({id, new_id, lc})
+      WinInfo.insert({id, new_id, lc})
 
       stack_push({container, lc, sizer})
       unquote(block)
@@ -796,7 +786,7 @@ defmodule WxDsl do
         }"
       )
 
-      put_table({id, new_id, mi})
+      WinInfo.insert({id, new_id, mi})
 
       ret = :wxMenu.append(parent, mi)
       Logger.debug("    :wxMenu.append(#{inspect(parent)}, #{inspect(mi)}) => #{inspect(ret)}")
@@ -831,7 +821,7 @@ defmodule WxDsl do
         }"
       )
 
-      put_table({id, new_id, mi})
+      WinInfo.insert({id, new_id, mi})
 
       ret = :wxMenu.append(parent, mi)
       Logger.debug("    :wxMenu.append(#{inspect(parent)}, #{inspect(mi)}) => #{inspect(ret)}")
@@ -891,7 +881,7 @@ defmodule WxDsl do
       # panel = :wxPanel.new(parent, size: {100, 100})
       panel = :wxPanel.new(container, options)
 
-      put_table({id, new_id, panel})
+      WinInfo.insert({id, new_id, panel})
 
       stack_push({container, panel, sizer})
       Logger.debug("  stack_push({#{inspect(container)}, #{inspect(panel)}, #{inspect(sizer)}})")
@@ -917,7 +907,7 @@ defmodule WxDsl do
 
   def setEvents(events) do
     Logger.debug("setEvents ++++++++++++++++++++++++++++++++++++++++++++++++++")
-    setEvents(events, WinInfo.get_by_name(:__main_frame__))
+    setEvents(events, WinInfo.getWxObject(:__main_frame__))
     Logger.debug("setEvents  --------------------------------------------------")
   end
 
@@ -1042,7 +1032,7 @@ defmodule WxDsl do
           :wxStaticBoxSizer.add(sizer, st, [])
       end
 
-      put_table({Map.get(attrs, :id, nil), new_id, st})
+      WinInfo.insert({Map.get(attrs, :id, nil), new_id, st})
 
       # put_info(Map.get(attrs, :id, :unknown), st)
       # put_xref(new_id, Map.get(attrs, :id, :unknown))
@@ -1075,7 +1065,7 @@ defmodule WxDsl do
 
       {id, new_id, sb} = WxStatusBar.new(parent, unquote(attributes))
 
-      put_table({id, new_id, sb})
+      WinInfo.insert({id, new_id, sb})
 
       Logger.debug("Status Bar -------------------------------------------------")
     end
@@ -1123,7 +1113,7 @@ defmodule WxDsl do
       win = :wxScrolledWindow.new(parent, [])
       :wxScrolledWindow.setScrollRate(win, 5, 5)
 
-      put_table({id, new_id, win})
+      WinInfo.insert({id, new_id, win})
 
       stack_push({container, win, sizer})
       unquote(block)
@@ -1176,7 +1166,7 @@ defmodule WxDsl do
           :wxStaticBoxSizer.add(parent, tc, [])
       end
 
-      put_table({Map.get(attrs, :id, nil), new_id, tc})
+      WinInfo.insert({Map.get(attrs, :id, nil), new_id, tc})
 
       Logger.debug("textControl/1 -----------------------------------------------------")
 
@@ -1207,7 +1197,7 @@ defmodule WxDsl do
               fileName = Path.expand(path <> "/" <> fileName)
               bitmap = :wxBitmap.new(fileName)
               t = :wxToolBar.addTool(parent, new_id, bitmap)
-              put_table({id, new_id, t})
+              WinInfo.insert({id, new_id, t})
               false
 
             {:icon, fileName} ->
@@ -1224,7 +1214,7 @@ defmodule WxDsl do
               )
 
               t = :wxToolBar.addTool(parent, new_id, bitmap)
-              put_table({id, new_id, t})
+              WinInfo.insert({id, new_id, t})
               false
 
             {:png, fileName} ->
@@ -1232,7 +1222,7 @@ defmodule WxDsl do
               bitmap = :wxBitmap.new()
               x = :wxBitmap.loadFile(bitmap, fileName, [{:type, @wxBITMAP_TYPE_PNG}])
               t = :wxToolBar.addTool(parent, new_id, bitmap)
-              put_table({id, new_id, t})
+              WinInfo.insert({id, new_id, t})
               false
 
             _ ->
@@ -1321,7 +1311,7 @@ defmodule WxDsl do
       Logger.debug("  :wxWindow.new(#{inspect(parent)}, #{inspect(new_id)}, #{inspect(options)}")
       win = :wxWindow.new(parent, new_id, options)
 
-      put_table({id, new_id, win})
+      WinInfo.insert({id, new_id, win})
 
       WxSizer.addToSizer(win, sizer, restOpts)
       Logger.debug("Window/1 -----------------------------------------------------")

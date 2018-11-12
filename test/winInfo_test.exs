@@ -1,4 +1,4 @@
-defmodule ExtopTest do
+defmodule WinInfoTest do
   use ExUnit.Case
   doctest ExTop
 

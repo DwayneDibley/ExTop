@@ -2,18 +2,25 @@ defmodule WxTopWindowLogic do
   require Logger
   use WxDefines
 
+@moduledoc """
+
+"""
   def init({action, state}) do
     display()
     {action, state, 1000}
   end
 
+@doc """
+Get the process data from the beam engine and display it.
+"""
   def display() do
     {sortCol, how} = getSettings()
-    # Logger.info("display(#{inspect(sortCol)}, #{inspect(how)})")
-    {_, _, listCtrl} = WinInfo.get_by_name(:list_ctrl)
+    listCtrl = WinInfo.getWxObject(:list_ctrl)
 
+    #
     procData = getProcessData(sortCol, how)
 
+    # Freeze the window during the update
     :wxWindow.freeze(listCtrl)
     addProcsToCtrl(listCtrl, procData)
     :wxWindow.thaw(listCtrl)
@@ -31,11 +38,11 @@ defmodule WxTopWindowLogic do
     end
   end
 
-  def getData([], procData) do
+  defp getData([], procData) do
     Enum.reverse(procData)
   end
 
-  def getData([pid | rest], procData) do
+  defp getData([pid | rest], procData) do
     data =
       :erlang.process_info(pid, [
         :registered_name,
@@ -143,7 +150,7 @@ defmodule WxTopWindowLogic do
   end
 
   def isChecked(menuItem) do
-    {_, _, obj} = WinInfo.get_by_name(menuItem)
+    obj = WinInfo.getWxObject(menuItem)
     :wxMenuItem.isChecked(obj)
   end
 

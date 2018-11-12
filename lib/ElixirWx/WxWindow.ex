@@ -16,7 +16,7 @@ defmodule WxWindow do
     Logger.debug("  :wxWindow.new(#{inspect(parent)}, #{inspect(new_id)}, #{inspect(options)}")
     win = :wxWindow.new(parent, new_id, options)
 
-    put_table({id, new_id, win})
+    WinInfo.insert({id, new_id, win})
 
     {id, new_id, win}
   end

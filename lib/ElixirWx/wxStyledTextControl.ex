@@ -13,7 +13,7 @@ defmodule WxStyledTextCtrl do
     Logger.debug("  :WxStyledTextCtrl.new(#{inspect(parent)}, #{inspect(options)}")
 
     win = :wxStyledTextCtrl.new(parent, options)
-    put_table({id, new_id, win})
+    WinInfo.insert({id, new_id, win})
 
     {id, new_id, win}
   end

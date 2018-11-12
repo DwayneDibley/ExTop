@@ -52,7 +52,7 @@ defmodule WxFunctions do
   """
   def closeWindow(windowName) do
     Logger.debug("closeWindow(#{inspect(windowName)})")
-    {_, _, frame} = WinInfo.get_by_name(:__main_frame__)
+    {_, _, frame} = WinInfo.getWxObject(:__main_frame__)
 
     case frame do
       nil ->
@@ -106,7 +106,7 @@ defmodule WxFunctions do
           :unknown_event
       end
 
-    {eventType, _idx, callBack} = WinInfo.get_by_name(event)
+    {eventType, _idx, callBack} = WinInfo.getWxObject(event)
     {senderName, _senderId, senderObj} = WinInfo.get_by_id(id)
 
     try do

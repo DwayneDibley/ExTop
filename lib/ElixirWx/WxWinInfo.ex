@@ -2,27 +2,91 @@ defmodule WinInfo do
   require Logger
 
   @moduledoc """
-  A process wide table containing the window information
+  When a window is created, an ets table is created which contains information
+  about the various window components. The information consists of the tuple
+  {name, id, obj} where:
+
+    | item | Description                                                      | Value     |
+    | --------- | --------------------------------------------------------    | --------- |
+    | name      | The id supplied when the component is created               | atom()    |
+    | id        | An unique integer id created when the component is created. | Integer() |
+    | object    | The WxWindows object reference.                             |           |
+
+  This module provides an interface to the information.
   """
-  def new_table() do
+  def createInfoTable() do
     try do
       :ets.new(table_name(), [:set, :protected, :named_table])
+      :ok
     rescue
       _ ->
         Logger.warn("Attempt to create #{inspect(table_name())} failed: Table exists. ")
+        :error
     end
   end
 
-  def put_table(value) do
+  @doc """
+  Insert window information into the winInfo table.
+  """
+  def insert(value) do
     :ets.insert_new(table_name(), value)
   end
 
   @doc """
-  Given am atom, get the info for the object.
+  Given the name or id of a the window object, return it.
   """
-  def get_by_name(name) do
-    # display_table()
-    res = :ets.lookup(table_name(), name)
+  def getWxObject(key) do
+    res =
+      cond do
+        is_atom(key) -> :ets.lookup(table_name(), key)
+        is_integer(key) -> :ets.match_object(table_name(), {:_, key, :_})
+      end
+
+    obj =
+      case length(res) do
+        0 ->
+          nil
+
+        _ ->
+          {_name, _id, obj} = List.first(res)
+          obj
+      end
+
+    obj
+  end
+
+  # ------------------
+  # Helper Functions
+  # ------------------
+  # Create the table name
+  defp table_name() do
+    String.to_atom("#{inspect(self())}")
+  end
+
+  # ---------
+
+  @doc """
+  Given an atom (The window id), get the info tuple.
+  returns {name, id, obj}
+  """
+  # def get_by_name(name) do
+  #   # display_table()
+  #   res = :ets.lookup(table_name(), name)
+  #
+  #   {name, id, obj} =
+  #     case length(res) do
+  #       0 -> {nil, nil, nil}
+  #       _ -> List.first(res)
+  #     end
+  #
+  #   {name, id, obj}
+  # end
+
+  @doc """
+  Retrieve data from the ets table
+  """
+  def getWindowId(id) when is_atom(id) do
+    res = :ets.match_object(table_name(), {:_, id, :_})
 
     {name, id, obj} =
       case length(res) do
@@ -49,6 +113,9 @@ defmodule WinInfo do
     {name, id, obj}
   end
 
+  @doc """
+
+  """
   def get_object_name(id) do
     {name, _id, _obj} = get_by_id(id)
     name
@@ -103,12 +170,12 @@ defmodule WinInfo do
     display_rows(t)
   end
 
-  def table_name() do
-    String.to_atom("#{inspect(self())}")
-  end
+  # def table_name() do
+  #   String.to_atom("#{inspect(self())}")
+  # end
 
   @doc """
-    FIFO implemented using ETS storage.
+    FIFO implemented using ETS storage. This is used during window creation
   """
   def stack_push(value) do
     stack = get_stack()
