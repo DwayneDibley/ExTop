@@ -3,6 +3,7 @@
 /deps/
 *.elixir
 *.elixir_scm
+*.elixir_ls
 *.fetch
 *.xref
 *.beam
