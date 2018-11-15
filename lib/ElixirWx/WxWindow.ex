@@ -2,7 +2,7 @@ defmodule WxWindow do
   require Logger
 
   import WxUtilities
-  import WinInfo
+  # import WinInfo
 
   @doc """
   Get the window options and create a new window.

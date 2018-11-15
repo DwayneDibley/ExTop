@@ -20,7 +20,7 @@ defmodule WxTopWindowLogic do
     # Testing ---------
     firstColText = "  " <> "#PID<0.1.0>"
     idx = WxReport.findRowIndex(listCtrl, firstColText)
-    Logger.info("WxReport.findRowIndex(listCtrl, #{inspect(firstColText)}) => #{inspect(idx)}")
+    # Logger.info("WxReport.findRowIndex(listCtrl, #{inspect(firstColText)}) => #{inspect(idx)}")
 
     if idx > 0 do
       Logger.info("itemData = #{inspect(:wxListCtrl.getItemData(listCtrl, idx))}")
@@ -59,9 +59,7 @@ defmodule WxTopWindowLogic do
   end
 
   def process([row | rest], data) do
-    Logger.error("row = #{inspect(row)}")
     dat = processRow(row, [])
-    # dat = "xx"
     process(rest, [dat | data])
   end
 
@@ -70,7 +68,11 @@ defmodule WxTopWindowLogic do
   end
 
   def processRow([{key, val} | rest], rowData) do
-    processRow(rest, ["#{inspect(val)}" | rowData])
+    val =
+      cond do
+        val == [] -> processRow(rest, ["" | rowData])
+        true -> processRow(rest, ["#{inspect(val)}" | rowData])
+      end
   end
 
   # ===================
@@ -214,7 +216,7 @@ defmodule WxTopWindowLogic do
   end
 
   def do_timeout(state) do
-    Logger.info("Do timeout, #{inspect(state)}")
+    # Logger.info("Do timeout, #{inspect(state)}")
     display(state)
     {:noreply, state, 1000}
   end

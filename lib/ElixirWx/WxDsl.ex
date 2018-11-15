@@ -707,7 +707,7 @@ defmodule WxDsl do
         case parent do
           {_, _, :wxListCtrl, _} ->
             col = WxListCtrl.newColumn(parent, options[:col], options[:heading], restOpts)
-            Logger.error("lcc = #{inspect(col)}")
+            # Logger.error("lcc = #{inspect(col)}")
             col
 
           _ ->
@@ -715,14 +715,14 @@ defmodule WxDsl do
             nil
         end
 
-      Logger.info("WxInfo.getCtrlName(#{inspect(parent)})")
+      # Logger.info("WxInfo.getCtrlName(#{inspect(parent)})")
 
       parentName = WinInfo.getCtrlName(parent)
-      Logger.info("parentName = #{inspect(parentName)}")
+      # Logger.info("parentName = #{inspect(parentName)}")
       colName = String.to_atom("#{Atom.to_string(parentName)}_col#{inspect(col)}")
 
       # id = :lcc
-      Logger.error("listCtrlCol = #{inspect(col)}")
+      # Logger.error("listCtrlCol = #{inspect(col)}")
       # new_id = 9999
       WinInfo.insertCtrl(
         colName,
@@ -1017,7 +1017,7 @@ defmodule WxDsl do
         case parent do
           {_, _, :wxListCtrl, _} ->
             col = WxReport.newColumn(parent, options[:col], options[:heading], restOpts)
-            Logger.error("lcc = #{inspect(col)}")
+            # Logger.error("lcc = #{inspect(col)}")
             col
 
           _ ->
@@ -1025,14 +1025,14 @@ defmodule WxDsl do
             nil
         end
 
-      Logger.info("WxInfo.getCtrlName(#{inspect(parent)})")
+      # Logger.info("WxInfo.getCtrlName(#{inspect(parent)})")
 
       parentName = WinInfo.getCtrlName(parent)
-      Logger.info("parentName = #{inspect(parentName)}")
+      # Logger.info("parentName = #{inspect(parentName)}")
       colName = String.to_atom("#{Atom.to_string(parentName)}_col#{inspect(col)}")
 
       # id = :lcc
-      Logger.error("listCtrlCol = #{inspect(col)}")
+      # Logger.error("listCtrlCol = #{inspect(col)}")
       # new_id = 9999
       WinInfo.insertCtrl(
         colName,

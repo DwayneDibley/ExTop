@@ -107,7 +107,6 @@ defmodule WxFunctions do
       end
 
     {eventType, _idx, callBack} = WinInfo.getWxObject(event)
-    Logger.error("eventCallback - get_bt_id()")
     {senderName, _senderId, senderObj} = WinInfo.get_by_id(id)
 
     try do

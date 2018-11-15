@@ -29,7 +29,6 @@ defmodule WinInfo do
   Insert window information into the winInfo table.
   """
   def insert(value) do
-    Logger.error("insert(#{inspect(value)})")
     :ets.insert_new(table_name(), value)
   end
 
@@ -37,7 +36,6 @@ defmodule WinInfo do
   Insert window information into the winInfo table.
   """
   def insertCtrl(name, control) do
-    Logger.error("insert(#{inspect(name)}, #{inspect(control)})")
     {_, id, _, _} = control
     :ets.insert_new(table_name(), {name, id, control})
   end
