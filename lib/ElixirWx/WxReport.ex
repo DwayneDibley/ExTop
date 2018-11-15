@@ -47,12 +47,26 @@ defmodule WxReport do
       true -> :wxListCtrl.setItem(listCtrl, row, 0, colData)
     end
 
+    setColWidth(listCtrl, 0, colData)
     setRowData(listCtrl, nRows, row, 1, rest)
   end
 
   def setRowData(listCtrl, nRows, row, col, [colData | rest]) do
     :wxListCtrl.setItem(listCtrl, row, col, colData)
+    setColWidth(listCtrl, col, colData)
     setRowData(listCtrl, nRows, row, col + 1, rest)
+  end
+
+  def setColWidth(listCtrl, col, data) do
+    {width, _y, _decent, _extLeading} = :wxListCtrl.getTextExtent(listCtrl, data, [])
+    width = width + 10
+    cwidth = :wxListCtrl.getColumnWidth(listCtrl, col)
+    # Logger.info("col = #{inspect(col)} width = #{inspect(width)}, cwidth = #{inspect(cwidth)}")
+
+    cond do
+      width > cwidth -> :wxListCtrl.setColumnWidth(listCtrl, col, width)
+      true -> :ok
+    end
   end
 
   @doc """
