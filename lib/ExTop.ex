@@ -22,7 +22,7 @@ defmodule ExTop do
   def start(_a, _b) do
     System.put_env("WX_APP_TITLE", "ExTop")
 
-    newWindow(ExTopWindow, WxTopWindowLogic, name: ETop, show: true)
+    newWindow(ExTopWindow, WxTopWindowLogic, name: ETopWindow, show: true)
     waitForWindowClose(ETop)
 
     # We break out of the loop when the exit button is pressed.

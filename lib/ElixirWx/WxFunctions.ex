@@ -52,7 +52,8 @@ defmodule WxFunctions do
   """
   def closeWindow(windowName) do
     Logger.debug("closeWindow(#{inspect(windowName)})")
-    {_, _, frame} = WinInfo.getWxObject(:__main_frame__)
+    # {_, _, frame, _} = WinInfo.getWxObject(:__main_frame__)
+    frame = WinInfo.getWxObject(:__main_frame__)
 
     case frame do
       nil ->

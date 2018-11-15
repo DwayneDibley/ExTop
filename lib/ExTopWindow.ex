@@ -36,7 +36,7 @@ defmodule ExTopWindow do
           boxSizer id: :outer_sizer, orient: @wxHORIZONTAL do
             layout1 = [proportion: 1, flag: @wxEXPAND ||| @wxALL, border: 5]
 
-            report id: :report, layout: layout1 do
+            report id: :report, layout: layout1, style: @wxLC_SINGLE_SEL do
               reportCol(col: 0, heading: "Pid")
               reportCol(col: 1, heading: "Name")
               reportCol(col: 2, heading: "Status")

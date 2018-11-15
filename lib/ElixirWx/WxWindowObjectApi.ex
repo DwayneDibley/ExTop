@@ -107,6 +107,9 @@ defmodule WxWinObj.API do
               true -> waitForWindowClose(waitWindow, timeout)
             end
 
+          {:EXIT, pid, :normal} ->
+            Logger.info("EXIT received: #{inspect({:EXIT, pid, :normal})}")
+
           msg ->
             Logger.info("Msg received: #{inspect(msg)}")
             waitForWindowClose(waitWindow, timeout)

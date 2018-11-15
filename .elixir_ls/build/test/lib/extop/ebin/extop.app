@@ -11,7 +11,7 @@
                         'Elixir.WxStyledTextCtrl','Elixir.WxTopLevelWindow',
                         'Elixir.WxTopWindowLogic','Elixir.WxUtilities',
                         'Elixir.WxWinObj','Elixir.WxWinObj.API',
-                        'Elixir.WxWindow']},
+                        'Elixir.WxWinObjEvt','Elixir.WxWindow']},
               {registered,[]},
               {vsn,"0.1.0"},
               {mod,{'Elixir.ExTop',[]}}]}.

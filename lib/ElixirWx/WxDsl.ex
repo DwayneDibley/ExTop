@@ -770,6 +770,7 @@ defmodule WxDsl do
       Logger.debug("  tos = #{inspect(container)}, #{inspect(parent)}, #{inspect(sizer)}}")
 
       mb = :wxMenuBar.new()
+      WinInfo.insertCtrl(:menu_bar, mb)
       Logger.debug("  :wxMenuBar.new() => #{inspect(mb)}")
 
       stack_push({container, mb, sizer})
@@ -808,7 +809,7 @@ defmodule WxDsl do
         }"
       )
 
-      WinInfo.insertCtrl(id, mi)
+      WinInfo.insertCtrl(id, new_id, mi)
 
       ret = :wxMenu.append(parent, mi)
       Logger.debug("    :wxMenu.append(#{inspect(parent)}, #{inspect(mi)}) => #{inspect(ret)}")
@@ -843,8 +844,8 @@ defmodule WxDsl do
         }"
       )
 
-      # WinInfo.insert({id, new_id, mi})
-      WinInfo.insertCtrl(id, mi)
+      # WinInfo.insertCtrl(id, mi)
+      WinInfo.insertCtrl(id, new_id, mi)
 
       ret = :wxMenu.append(parent, mi)
       Logger.debug("    :wxMenu.append(#{inspect(parent)}, #{inspect(mi)}) => #{inspect(ret)}")
@@ -1008,17 +1009,13 @@ defmodule WxDsl do
       Logger.debug("listCtrlCol/2 +++++++++++++++++++++++++++++++++++++++++++++++++++++")
 
       {container, parent, sizer} = stack_tos()
-      # Logger.info("Parent = #{inspect(parent)}")
-
       defaults = [col: 0, heading: ""]
       {_, options, restOpts} = getOptions(unquote(attributes), defaults)
 
       col =
         case parent do
           {_, _, :wxListCtrl, _} ->
-            col = WxReport.newColumn(parent, options[:col], options[:heading], restOpts)
-            # Logger.error("lcc = #{inspect(col)}")
-            col
+            WxReport.newColumn(parent, options[:col], options[:heading], restOpts)
 
           _ ->
             Logger.error("Error listCtrlCol: Parent must be a list control")

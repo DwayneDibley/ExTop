@@ -40,8 +40,19 @@ defmodule WinInfo do
     :ets.insert_new(table_name(), {name, id, control})
   end
 
-  def getCtrlName(ctrl) do
-    {_, id, _, _} = ctrl
+  def insertCtrl(name, id, control) do
+    :ets.insert_new(table_name(), {name, id, control})
+  end
+
+  def getCtrlName({_, id, _, _}) do
+    # {_, id, _, _} = ctrl
+    res = :ets.match_object(table_name(), {:_, id, :_})
+    {name, _id, _obj} = List.first(res)
+    name
+  end
+
+  def getCtrlName(id) when is_integer(id) do
+    # {_, id, _, _} = ctrl
     res = :ets.match_object(table_name(), {:_, id, :_})
     {name, _id, _obj} = List.first(res)
     name
@@ -117,7 +128,7 @@ defmodule WinInfo do
   returns {name, id, obj}
   """
   def get_by_id(id) do
-    Logger.error("get_by_id(#{inspect(id)})")
+    # Logger.error("get_by_id(#{inspect(id)})")
     res = :ets.match_object(table_name(), {:_, id, :_})
 
     {name, id, obj} =

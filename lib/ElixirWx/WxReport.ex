@@ -16,52 +16,126 @@ defmodule WxReport do
   def new(parent, options) do
     Logger.debug("  WxReport.new(#{inspect(parent)}, #{inspect(options)}")
     # ||| @wxLC_SINGLE_SEL)
-    reportCtrl = :wxListCtrl.new(parent, style: @wxLC_REPORT)
-    Logger.debug("report = #{inspect(reportCtrl)}")
-    reportCtrl
+    :wxListCtrl.new(parent, style: @wxLC_REPORT)
+  end
+
+  @doc """
+  Get the selected row from the list control. Returns a tuple containing the row
+  index and the text in the specified column. If no column is specified, then the
+  text in the first column is returned.
+  """
+  def getSelection(listCtrl, col \\ 0) do
+    idx = :wxListCtrl.getNextItem(listCtrl, -1, state: @wxLIST_STATE_SELECTED)
+
+    text =
+      if idx >= 0 do
+        listItem = :wxListItem.new()
+        :wxListItem.setId(listItem, idx)
+        :wxListItem.setColumn(listItem, col)
+        :wxListItem.setMask(listItem, @wxLIST_MASK_TEXT)
+        :wxListCtrl.getItem(listCtrl, listItem)
+        :wxListItem.getText(listItem)
+      else
+        ""
+      end
+
+    {idx, text}
+  end
+
+  @doc """
+  Get the selected row from the list control. Returns a tuple containing the row
+  index and the text in the specified column. If no column is specified, then the
+  text in the first column is returned.
+  """
+  def setSelection(listCtrl, row, clearOldSelection \\ true) do
+    Logger.debug("setSelection(listCtrl, #{inspect(row)}, #{inspect(clearOldSelection)})")
+    # idx = :wxListCtrl.getNextItem(listCtrl, -1, state: @wxLIST_STATE_SELECTED)
+
+    # if clearOldSelection do
+    #  clearSelection(listCtrl)
+    # end
+
+    nItems = :wxListCtrl.getItemCount(listCtrl)
+
+    res =
+      if row >= 0 and row < nItems do
+        listItem = :wxListItem.new()
+        :wxListItem.setId(listItem, row)
+        :wxListItem.setState(listItem, @wxLIST_STATE_SELECTED)
+        :wxListCtrl.setItem(listCtrl, listItem)
+      else
+        false
+      end
+  end
+
+  def clearSelection(listCtrl) do
+    {row, text} = getSelection(listCtrl)
+    Logger.debug("clearSelection(listCtrl) selection=#{inspect(row)}")
+
+    if row >= 0 do
+      Logger.debug("Deselect row #{inspect(row)}")
+      # wxListCtrl->SetItemState(item, 0, wxLIST_STATE_SELECTED|wxLIST_STATE_FOCUSED);
+      # listItem = :wxListItem.new()
+      # :wxListItem.setId(listItem, row)
+      # :wxListItem.setStateMask(listItem, @wxLIST_STATE_SELECTED)
+      # :wxListCtrl.setItem(listCtrl, listItem)
+      :wxListCtrl.setItemState(listCtrl, row, 0, @wxLIST_STATE_SELECTED ||| @wxLIST_STATE_FOCUSED)
+    else
+      false
+    end
   end
 
   @doc """
   Set the data in a report, where the data contains a list lists
   containing rows of data.
   """
-  def setReportData(listCtrl, data) do
+  def setReportData(listCtrl, data, font) do
     nRows = :wxListCtrl.getItemCount(listCtrl)
-    setData(listCtrl, nRows, 0, data)
+    setData(listCtrl, nRows, 0, data, font)
   end
 
-  def setData(_, _, _, []) do
+  def setData(_, _, _, [], _) do
   end
 
-  def setData(listCtrl, nRows, row, [rowData | rest]) do
-    setRowData(listCtrl, nRows, row, 0, rowData)
-    setData(listCtrl, nRows, row + 1, rest)
+  def setData(listCtrl, nRows, row, [rowData | rest], font) do
+    setRowData(listCtrl, nRows, row, 0, rowData, font)
+    setData(listCtrl, nRows, row + 1, rest, font)
   end
 
-  def setRowData(_, _, _, _, []) do
+  def setRowData(_, _, _, _, [], _) do
   end
 
-  def setRowData(listCtrl, nRows, row, 0, [colData | rest]) do
+  def setRowData(listCtrl, nRows, row, 0, [colData | rest], font) do
     cond do
-      row >= nRows -> :wxListCtrl.insertItem(listCtrl, row, colData)
-      true -> :wxListCtrl.setItem(listCtrl, row, 0, colData)
+      row >= nRows ->
+        :wxListCtrl.insertItem(listCtrl, row, colData)
+        :wxListCtrl.setItemFont(listCtrl, row, font)
+
+        case rem(row, 2) do
+          0 -> :wxListCtrl.setItemBackgroundColour(listCtrl, row, {230, 247, 255})
+          1 -> :wxListCtrl.setItemBackgroundColour(listCtrl, row, @wxWHITE)
+        end
+
+      true ->
+        :wxListCtrl.setItem(listCtrl, row, 0, colData)
     end
 
-    setColWidth(listCtrl, 0, colData)
-    setRowData(listCtrl, nRows, row, 1, rest)
+    setColWidth(listCtrl, 0, colData, font)
+    setRowData(listCtrl, nRows, row, 1, rest, font)
   end
 
-  def setRowData(listCtrl, nRows, row, col, [colData | rest]) do
+  def setRowData(listCtrl, nRows, row, col, [colData | rest], font) do
     :wxListCtrl.setItem(listCtrl, row, col, colData)
-    setColWidth(listCtrl, col, colData)
-    setRowData(listCtrl, nRows, row, col + 1, rest)
+    setColWidth(listCtrl, col, colData, font)
+    setRowData(listCtrl, nRows, row, col + 1, rest, font)
   end
 
-  def setColWidth(listCtrl, col, data) do
-    {width, _y, _decent, _extLeading} = :wxListCtrl.getTextExtent(listCtrl, data, [])
+  def setColWidth(listCtrl, col, data, font) do
+    {width, _y, _decent, _extLeading} =
+      :wxListCtrl.getTextExtent(listCtrl, data, [{:theFont, font}])
+
     width = width + 10
     cwidth = :wxListCtrl.getColumnWidth(listCtrl, col)
-    # Logger.info("col = #{inspect(col)} width = #{inspect(width)}, cwidth = #{inspect(cwidth)}")
 
     cond do
       width > cwidth -> :wxListCtrl.setColumnWidth(listCtrl, col, width)
@@ -87,12 +161,6 @@ defmodule WxReport do
   Add a new column to the list control
   """
   def newColumn(parent, colNo, heading, options \\ []) do
-    Logger.debug(
-      "  :wxListCtrl.insertColumn(#{inspect(parent)}, #{inspect(colNo)}, #{inspect(heading)}, #{
-        inspect(options)
-      })"
-    )
-
-    lc = :wxListCtrl.insertColumn(parent, colNo, heading, options)
+    :wxListCtrl.insertColumn(parent, colNo, heading, options)
   end
 end

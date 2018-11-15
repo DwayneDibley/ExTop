@@ -250,6 +250,22 @@ defmodule WxWinObj do
     Logger.debug("terminate: #{inspect(reason)}, #{inspect(msg)}")
   end
 
+  @impl true
+  def handle_info(:timeout, state) do
+    case handlerExists(state, :do_timeout, 1) do
+      true ->
+        apply(state[:logic], :do_timeout, [state])
+
+      false ->
+        Logger.warn("No handler for handle_info(:timeout)")
+        {:noreply, state}
+    end
+  end
+
+  def handle_info({:wx, _, _, _, _} = evt, state) do
+    WxWinObjEvt.handleWxEvent(evt, state)
+  end
+
   # Handle Info
   def handle_info({_, _, _sender, _, {:wxClose, :close_window}}, state) do
     send(state[:parent], {state[:winName], :child_window_closed, "Close window event"})
@@ -266,16 +282,16 @@ defmodule WxWinObj do
         {_a, sender, _b, _c, {:wxCommand, :command_menu_selected, _d, _e, _f}},
         state
       ) do
-    Logger.error(
-      "Handle info: #{
-        inspect({_a, sender, _b, _c, {:wxCommand, :command_menu_selected, _d, _e, _f}})
-      }"
-    )
+    # Logger.debug(
+    #   "Handle info: #{
+    #     inspect({_a, sender, _b, _c, {:wxCommand, :command_menu_selected, _d, _e, _f}})
+    #   }"
+    # )
 
     ret =
       case handlerExists(state, :do_menu_click, 2) do
         true ->
-          Logger.error("handle_info command_menu_selected - get_by_id()")
+          Logger.debug("handle_info command_menu_selected - get_by_id()")
 
           {name, _id, _obj} = WinInfo.get_by_id(sender)
           apply(state[:logic], :do_menu_click, [name, state])
@@ -357,20 +373,6 @@ defmodule WxWinObj do
 
     invokeEventHandler(:do_parent_window_closed, pid, state)
     {:stop, :normal, "Parent died"}
-  end
-
-  @impl true
-  def handle_info(:timeout, state) do
-    # Logger.info("#{inspect(state[:winName])} - handle Info: :timeout, #{inspect(state)}")
-
-    case handlerExists(state, :do_timeout, 1) do
-      true ->
-        apply(state[:logic], :do_timeout, [state])
-
-      false ->
-        Logger.warn("No handler for handle_info(:timeout)")
-        {:noreply, state}
-    end
   end
 
   @impl true

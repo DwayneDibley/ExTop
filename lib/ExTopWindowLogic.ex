@@ -17,38 +17,46 @@ defmodule WxTopWindowLogic do
     {sortCol, how} = getSettings()
     listCtrl = WinInfo.getWxObject(:report)
 
-    # Testing ---------
-    firstColText = "  " <> "#PID<0.1.0>"
-    idx = WxReport.findRowIndex(listCtrl, firstColText)
-    # Logger.info("WxReport.findRowIndex(listCtrl, #{inspect(firstColText)}) => #{inspect(idx)}")
-
-    if idx > 0 do
-      Logger.info("itemData = #{inspect(:wxListCtrl.getItemData(listCtrl, idx))}")
-      Logger.info("font = #{inspect(:wxListCtrl.getItemFont(listCtrl, idx))}")
-
-      Logger.info(
-        "state = #{inspect(:wxListCtrl.getItemState(listCtrl, idx, @wxLIST_STATE_SELECTED))}"
-      )
-
-      Logger.info("text = #{inspect(:wxListCtrl.getItemText(listCtrl, idx))}")
-      Logger.info("itemCount = #{inspect(:wxListCtrl.getItemCount(listCtrl))}")
-      Logger.info("itemData = #{inspect(:wxListCtrl.getItemData(listCtrl, idx))}")
-    end
-
-    # end testing ----------------
+    # # Testing ---------
+    # firstColText = "  " <> "#PID<0.1.0>"
+    # idx = WxReport.findRowIndex(listCtrl, firstColText)
+    # # Logger.info("WxReport.findRowIndex(listCtrl, #{inspect(firstColText)}) => #{inspect(idx)}")
+    #
+    # if idx > 0 do
+    #   Logger.info("itemData = #{inspect(:wxListCtrl.getItemData(listCtrl, idx))}")
+    #   Logger.info("font = #{inspect(:wxListCtrl.getItemFont(listCtrl, idx))}")
+    #
+    #   Logger.info(
+    #     "state = #{inspect(:wxListCtrl.getItemState(listCtrl, idx, @wxLIST_STATE_SELECTED))}"
+    #   )
+    #
+    #   Logger.info("text = #{inspect(:wxListCtrl.getItemText(listCtrl, idx))}")
+    #   Logger.info("itemCount = #{inspect(:wxListCtrl.getItemCount(listCtrl))}")
+    #   Logger.info("itemData = #{inspect(:wxListCtrl.getItemData(listCtrl, idx))}")
+    # end
+    #
+    # # end testing ----------------
 
     # Get the beam engine per procews data
     procData = getProcessData(sortCol, how)
     nProcs = length(procData)
     data = process(procData, [])
     WxStatusBar.setText("#{nProcs} processes")
+    {selected, txt} = WxReport.getSelection(listCtrl)
+    # Logger.info("Selected = #{inspect(selected)}")
+
+    font = :wxFont.new(14, @wxFONTFAMILY_MODERN, @wxFONTSTYLE_NORMAL, @wxFONTWEIGHT_NORMAL)
 
     # Freeze the window during the update
     :wxWindow.freeze(listCtrl)
     # addProcsToCtrl(listCtrl, procData)
-    WxReport.setReportData(listCtrl, data)
+    WxReport.setReportData(listCtrl, data, font)
 
     :wxWindow.thaw(listCtrl)
+
+    idx = WxReport.findRowIndex(listCtrl, txt)
+    WxReport.clearSelection(listCtrl)
+    WxReport.setSelection(listCtrl, idx)
 
     :timer.sleep(1000)
   end
