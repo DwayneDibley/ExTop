@@ -12,8 +12,7 @@ defmodule WxListCtrl do
     Logger.debug("  :wxListCtrl.new(#{inspect(parent)}, #{inspect(options)}")
     # ||| @wxLC_SINGLE_SEL)
     lc = :wxListCtrl.new(parent, style: @wxLC_REPORT)
-
-    # Logger.info("Col Ct = #{inspect(:wxListCtrl.getColumnCount(lc))}")
+    Logger.debug("lc = #{inspect(lc)}")
     lc
   end
 
@@ -24,6 +23,6 @@ defmodule WxListCtrl do
       })"
     )
 
-    :wxListCtrl.insertColumn(parent, colNo, heading, options)
+    lc = :wxListCtrl.insertColumn(parent, colNo, heading, options)
   end
 end

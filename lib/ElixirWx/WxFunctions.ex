@@ -107,6 +107,7 @@ defmodule WxFunctions do
       end
 
     {eventType, _idx, callBack} = WinInfo.getWxObject(event)
+    Logger.error("eventCallback - get_bt_id()")
     {senderName, _senderId, senderObj} = WinInfo.get_by_id(id)
 
     try do
@@ -124,6 +125,7 @@ defmodule WxFunctions do
       {:wx, senderId, senderObj, _winInfo, {_group, event, _, _, _}} ->
         Logger.debug("Event Message: #{inspect(senderId)}, #{inspect(senderObj)}}")
         Logger.debug("  Event: #{inspect(event)}")
+        Logger.error("getEvent - get_bt_id()")
 
         {_eventType, _senderId, _callback} = WinInfo.get_by_id(senderId)
 
@@ -131,6 +133,7 @@ defmodule WxFunctions do
         Logger.debug("Event Message: #{inspect(senderId)}, #{inspect(senderObj)}}")
         Logger.debug("  Event: #{inspect(event)}")
 
+        Logger.error("getEvent - get_by_id()")
         {_eventType, senderId, _callback} = WinInfo.get_by_id(senderId)
         {senderId, event, group}
 

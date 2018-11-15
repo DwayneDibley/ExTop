@@ -29,7 +29,24 @@ defmodule WinInfo do
   Insert window information into the winInfo table.
   """
   def insert(value) do
+    Logger.error("insert(#{inspect(value)})")
     :ets.insert_new(table_name(), value)
+  end
+
+  @doc """
+  Insert window information into the winInfo table.
+  """
+  def insertCtrl(name, control) do
+    Logger.error("insert(#{inspect(name)}, #{inspect(control)})")
+    {_, id, _, _} = control
+    :ets.insert_new(table_name(), {name, id, control})
+  end
+
+  def getCtrlName(ctrl) do
+    {_, id, _, _} = ctrl
+    res = :ets.match_object(table_name(), {:_, id, :_})
+    {name, _id, _obj} = List.first(res)
+    name
   end
 
   @doc """
@@ -102,6 +119,7 @@ defmodule WinInfo do
   returns {name, id, obj}
   """
   def get_by_id(id) do
+    Logger.error("get_by_id(#{inspect(id)})")
     res = :ets.match_object(table_name(), {:_, id, :_})
 
     {name, id, obj} =

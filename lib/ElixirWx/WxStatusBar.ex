@@ -1,6 +1,6 @@
 defmodule WxStatusBar do
   import WxUtilities
-  #import WinInfo
+  # import WinInfo
   require Logger
 
   @moduledoc """
@@ -27,7 +27,7 @@ defmodule WxStatusBar do
     Logger.debug("  :wxFrame.createStatusBar(#{inspect(parent)}, #{inspect(options)}")
     sb = :wxFrame.createStatusBar(parent, options)
 
-    WinInfo.insert({id, new_id, sb})
+    WinInfo.insertCtrl(id, sb)
 
     defaults = [text: nil]
     {_, options, _restOpts} = getOptions(restOpts, defaults)

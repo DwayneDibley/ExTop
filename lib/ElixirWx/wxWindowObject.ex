@@ -263,12 +263,20 @@ defmodule WxWinObj do
 
   # Menu event
   def handle_info(
-        {_, sender, _, _, {:wxCommand, :command_menu_selected, _, _, _}},
+        {_a, sender, _b, _c, {:wxCommand, :command_menu_selected, _d, _e, _f}},
         state
       ) do
+    Logger.error(
+      "Handle info: #{
+        inspect({_a, sender, _b, _c, {:wxCommand, :command_menu_selected, _d, _e, _f}})
+      }"
+    )
+
     ret =
       case handlerExists(state, :do_menu_click, 2) do
         true ->
+          Logger.error("handle_info command_menu_selected - get_by_id()")
+
           {name, _id, _obj} = WinInfo.get_by_id(sender)
           apply(state[:logic], :do_menu_click, [name, state])
 
@@ -291,6 +299,22 @@ defmodule WxWinObj do
 
       false ->
         Logger.warn("No handler for handle_info(:do_button_click)")
+        {:noreply, state}
+    end
+  end
+
+  # List Ctrl Click
+  # {:wxList, :command_list_col_click, -1, -1, -1, 0, {51, -9}}}
+  def handle_info(
+        {_, sender, _, _, {:wxListx, :command_list_col_click, _, _, _, col, _}},
+        state
+      ) do
+    case handlerExists(state, :do_command_list_col_click, 3) do
+      true ->
+        apply(state[:logic], :do_command_list_col_click, [sender, col, state])
+
+      false ->
+        Logger.warn("No handler for handle_info(:do_command_list_col_click)")
         {:noreply, state}
     end
   end
@@ -378,6 +402,7 @@ defmodule WxWinObj do
 
   defp invokeEventHandler(event, sender, state) do
     {name, _id, _obj} = WinInfo.get_by_id(sender)
+    Logger.error("invokeEventHandler - get_by_id()")
 
     case state[:logic_fns][event] do
       nil ->

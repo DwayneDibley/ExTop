@@ -28,32 +28,36 @@ defmodule ExTopWindow do
             menuRadioItem(id: :decending, text: "&Descending")
             menuRadioItem(id: :ascending, text: "&Ascending")
           end
+
+          events(command_menu_selected: [])
         end
 
         panel id: :main_panel do
           boxSizer id: :outer_sizer, orient: @wxHORIZONTAL do
             layout1 = [proportion: 1, flag: @wxEXPAND ||| @wxALL, border: 5]
 
-            listCtrl id: :list_ctrl, layout: layout1 do
-              listCtrlCol(col: 0, heading: "Pid")
-              listCtrlCol(col: 1, heading: "Name")
-              listCtrlCol(col: 2, heading: "Status")
-              listCtrlCol(col: 3, heading: "Heap Size", format: @wxLIST_FORMAT_RIGHT)
-              listCtrlCol(col: 4, heading: "Memeory Size", format: @wxLIST_FORMAT_RIGHT)
-              listCtrlCol(col: 5, heading: "Msg Queue", format: @wxLIST_FORMAT_RIGHT)
-              listCtrlCol(col: 6, heading: "Stack", format: @wxLIST_FORMAT_RIGHT)
-              listCtrlCol(col: 7, heading: "Reductions", format: @wxLIST_FORMAT_RIGHT)
+            report id: :report, layout: layout1 do
+              reportCol(col: 0, heading: "Pid")
+              reportCol(col: 1, heading: "Name")
+              reportCol(col: 2, heading: "Status")
+              reportCol(col: 3, heading: "Heap Size", format: @wxLIST_FORMAT_RIGHT)
+              reportCol(col: 4, heading: "Memeory Size", format: @wxLIST_FORMAT_RIGHT)
+              reportCol(col: 5, heading: "Msg Queue", format: @wxLIST_FORMAT_RIGHT)
+              reportCol(col: 6, heading: "Stack", format: @wxLIST_FORMAT_RIGHT)
+              reportCol(col: 7, heading: "Reductions", format: @wxLIST_FORMAT_RIGHT)
+              events(command_list_col_click: [])
             end
           end
         end
 
         statusBar(text: "--")
-      end
 
-      events(
-        close_window: [],
-        command_menu_selected: [handler: &WxTopWindowLogic.commandMenuSelected/4]
-      )
+        events(
+          close_window: []
+          # command_menu_selected: [handler: &WxTopWindowLogic.commandMenuSelected/4]
+          # command_list_col_click: []
+        )
+      end
     end
   end
 end

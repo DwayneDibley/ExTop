@@ -59,7 +59,7 @@ defmodule WxDsl do
       wx = :wx.new()
 
       # put_info( :window, wx)
-      WinInfo.insert({:window, -1, wx})
+      WinInfo.insertCtrl(:window, wx)
 
       # execute the function body
       stack_push({wx, nil, nil})
@@ -414,11 +414,12 @@ defmodule WxDsl do
     quote do
       Logger.debug("Events +++++++++++++++++++++++++++++++++++++++++++++++++++++")
       {container, parent, sizer} = stack_tos()
-      Logger.debug("  tos = {#{inspect(parent)}, #{inspect(container)}, #{inspect(sizer)}}")
+      Logger.debug("  tos = {#{inspect(container)}, #{inspect(parent)}, #{inspect(sizer)}}")
 
       Logger.debug("  events: #{inspect(unquote(attributes))}")
 
-      frame = WinInfo.getWxObject(:__main_frame__)
+      # frame = WinInfo.getWxObject(:__main_frame__)
+      frame = parent
       WxEvents.setEvents(__ENV__.module, frame, unquote(attributes))
       Logger.debug("Events -----------------------------------------------------")
     end
@@ -478,7 +479,8 @@ defmodule WxDsl do
 
       stack_push({frame, frame, nil})
 
-      WinInfo.insert({Map.get(args_dict, :id, nil), new_id, frame})
+      WinInfo.insertCtrl(Map.get(args_dict, :id, :noname), frame)
+      # WinInfo.insert({Map.get(args_dict, :id, nil), new_id, frame})
       # put_info(Map.get(args_dict, :id, nil), frame)
       # put_xref(new_id, Map.get(args_dict, :id, nil))
 
@@ -643,17 +645,19 @@ defmodule WxDsl do
   defmacro listCtrl(attributes, do: block) do
     quote do
       Logger.debug("listCtrl/2 +++++++++++++++++++++++++++++++++++++++++++++++++++++")
-      new_id = :wx_misc.newId()
+      # new_id = :wx_misc.newId()
       {container, parent, sizer} = stack_tos()
       # Logger.info("Parent = #{inspect(parent)}")
 
-      defaults = [id: "_no_id_#{inspect(new_id)}", style: nil, size: nil]
+      # defaults = [id: "_no_id_#{inspect(new_id)}", style: nil, size: nil]
+      defaults = [id: "_no_id_", style: nil, size: nil]
       {id, options, _restOpts} = getOptions(unquote(attributes), defaults)
 
-      options = [{:winid, new_id} | options]
+      # options = [{:winid, new_id} | options]
       lc = WxListCtrl.new(parent, options)
+      {:wx_ref, ctrlId, :wxListCtrl, data} = lc
 
-      WinInfo.insert({id, new_id, lc})
+      WinInfo.insert({id, ctrlId, lc})
 
       stack_push({container, lc, sizer})
       unquote(block)
@@ -699,13 +703,31 @@ defmodule WxDsl do
       defaults = [col: 0, heading: ""]
       {_, options, restOpts} = getOptions(unquote(attributes), defaults)
 
-      case parent do
-        {_, _, :wxListCtrl, _} ->
-          WxListCtrl.newColumn(parent, options[:col], options[:heading], restOpts)
+      col =
+        case parent do
+          {_, _, :wxListCtrl, _} ->
+            col = WxListCtrl.newColumn(parent, options[:col], options[:heading], restOpts)
+            Logger.error("lcc = #{inspect(col)}")
+            col
 
-        _ ->
-          Logger.error("Error listCtrlCol: Parent must be a list control")
-      end
+          _ ->
+            Logger.error("Error listCtrlCol: Parent must be a list control")
+            nil
+        end
+
+      Logger.info("WxInfo.getCtrlName(#{inspect(parent)})")
+
+      parentName = WinInfo.getCtrlName(parent)
+      Logger.info("parentName = #{inspect(parentName)}")
+      colName = String.to_atom("#{Atom.to_string(parentName)}_col#{inspect(col)}")
+
+      # id = :lcc
+      Logger.error("listCtrlCol = #{inspect(col)}")
+      # new_id = 9999
+      WinInfo.insertCtrl(
+        colName,
+        {:wx_ref, :wx_misc.newId(), :wxListCtrlCol, [col: col, listCtrl: parent]}
+      )
 
       Logger.debug("listCtrlCol/2 -----------------------------------------------------")
     end
@@ -786,7 +808,7 @@ defmodule WxDsl do
         }"
       )
 
-      WinInfo.insert({id, new_id, mi})
+      WinInfo.insertCtrl(id, mi)
 
       ret = :wxMenu.append(parent, mi)
       Logger.debug("    :wxMenu.append(#{inspect(parent)}, #{inspect(mi)}) => #{inspect(ret)}")
@@ -821,7 +843,8 @@ defmodule WxDsl do
         }"
       )
 
-      WinInfo.insert({id, new_id, mi})
+      # WinInfo.insert({id, new_id, mi})
+      WinInfo.insertCtrl(id, mi)
 
       ret = :wxMenu.append(parent, mi)
       Logger.debug("    :wxMenu.append(#{inspect(parent)}, #{inspect(mi)}) => #{inspect(ret)}")
@@ -881,7 +904,8 @@ defmodule WxDsl do
       # panel = :wxPanel.new(parent, size: {100, 100})
       panel = :wxPanel.new(container, options)
 
-      WinInfo.insert({id, new_id, panel})
+      # WinInfo.insert({id, new_id, panel})
+      WinInfo.insertCtrl(id, panel)
 
       stack_push({container, panel, sizer})
       Logger.debug("  stack_push({#{inspect(container)}, #{inspect(panel)}, #{inspect(sizer)}})")
@@ -902,6 +926,120 @@ defmodule WxDsl do
       end
 
       Logger.debug("panel -----------------------------------------------------")
+    end
+  end
+
+  @doc """
+  Create a WxListCtrl.
+
+  | Parameter | Description                                                  | Value     | Default  |
+  | --------- | ------------------------------------------------------------ | --------- | -------- |
+  | id        | The id of the list control.                                  | atom()    | none     |
+  | layout    | The layout to be applied when adding this control to the containing sizer. | list() | []|
+
+  Example:
+
+  ```
+  ...
+  boxSizer id: :outer_sizer, orient: @wxHORIZONTAL do
+    layout1 = [proportion: 1, flag: @wxEXPAND ||| @wxALL, border: 5]
+
+    listCtrl id: :list_ctrl_1, layout: layout1 do
+      listCtrlCol(col: 0, heading: "Pid", width: 100)
+      listCtrlCol(col: 1, heading: "Message Queue")
+      listCtrlCol(col: 2, heading: "Heap")
+    end
+  end
+  ...
+  """
+  defmacro report(attributes, do: block) do
+    quote do
+      Logger.debug("listCtrl/2 +++++++++++++++++++++++++++++++++++++++++++++++++++++")
+      # new_id = :wx_misc.newId()
+      {container, parent, sizer} = stack_tos()
+      # Logger.info("Parent = #{inspect(parent)}")
+
+      # defaults = [id: "_no_id_#{inspect(new_id)}", style: nil, size: nil]
+      defaults = [id: "_no_id_", style: nil, size: nil]
+      {id, options, _restOpts} = getOptions(unquote(attributes), defaults)
+
+      # options = [{:winid, new_id} | options]
+      lc = WxReport.new(parent, options)
+      {:wx_ref, ctrlId, :wxListCtrl, data} = lc
+
+      WinInfo.insert({id, ctrlId, lc})
+
+      stack_push({container, lc, sizer})
+      unquote(block)
+      stack_pop()
+
+      WxSizer.add(lc, sizer, unquote(attributes))
+
+      Logger.debug("listCtrl/2 -----------------------------------------------------")
+      lc
+    end
+  end
+
+  @doc """
+  Create a listCtrl column and add it to the containing list control.
+
+  | Parameter | Description                   | Value     | Default  |
+  | --------- | ------------------------------| --------- | -------- |
+  | col       | The column to add.            | integer() | none     |
+  | heading   | The column heading.           | string()  | ""       |
+
+  Example:
+
+  ```
+  ...
+  boxSizer id: :outer_sizer, orient: @wxHORIZONTAL do
+    layout1 = [proportion: 1, flag: @wxEXPAND ||| @wxALL, border: 5]
+
+    listCtrl id: :list_ctrl_1, layout: layout1 do
+      listCtrlCol(col: 0, heading: "Pid", width: 100)
+      listCtrlCol(col: 1, heading: "Message Queue")
+      listCtrlCol(col: 2, heading: "Heap")
+    end
+  end
+  ...
+  """
+  defmacro reportCol(attributes) do
+    quote do
+      Logger.debug("listCtrlCol/2 +++++++++++++++++++++++++++++++++++++++++++++++++++++")
+
+      {container, parent, sizer} = stack_tos()
+      # Logger.info("Parent = #{inspect(parent)}")
+
+      defaults = [col: 0, heading: ""]
+      {_, options, restOpts} = getOptions(unquote(attributes), defaults)
+
+      col =
+        case parent do
+          {_, _, :wxListCtrl, _} ->
+            col = WxReport.newColumn(parent, options[:col], options[:heading], restOpts)
+            Logger.error("lcc = #{inspect(col)}")
+            col
+
+          _ ->
+            Logger.error("Error listCtrlCol: Parent must be a list control")
+            nil
+        end
+
+      Logger.info("WxInfo.getCtrlName(#{inspect(parent)})")
+
+      parentName = WinInfo.getCtrlName(parent)
+      Logger.info("parentName = #{inspect(parentName)}")
+      colName = String.to_atom("#{Atom.to_string(parentName)}_col#{inspect(col)}")
+
+      # id = :lcc
+      Logger.error("listCtrlCol = #{inspect(col)}")
+      # new_id = 9999
+      WinInfo.insertCtrl(
+        colName,
+        {:wx_ref, :wx_misc.newId(), :wxListCtrlCol, [col: col, listCtrl: parent]}
+      )
+
+      Logger.debug("listCtrlCol/2 -----------------------------------------------------")
     end
   end
 
@@ -1032,7 +1170,8 @@ defmodule WxDsl do
           :wxStaticBoxSizer.add(sizer, st, [])
       end
 
-      WinInfo.insert({Map.get(attrs, :id, nil), new_id, st})
+      # WinInfo.insert({Map.get(attrs, :id, nil), new_id, st})
+      WinInfo.insertCtrl(Map.get(attrs, :id, :none), st)
 
       # put_info(Map.get(attrs, :id, :unknown), st)
       # put_xref(new_id, Map.get(attrs, :id, :unknown))
@@ -1065,7 +1204,8 @@ defmodule WxDsl do
 
       {id, new_id, sb} = WxStatusBar.new(parent, unquote(attributes))
 
-      WinInfo.insert({id, new_id, sb})
+      # WinInfo.insert({id, new_id, sb})
+      WinInfo.insertCtrl(id, sb)
 
       Logger.debug("Status Bar -------------------------------------------------")
     end
