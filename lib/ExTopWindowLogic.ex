@@ -13,55 +13,36 @@ defmodule WxTopWindowLogic do
   @doc """
   Get the process data from the beam engine and display it.
   """
-  def display(state) do
+  def display(_state) do
     {sortCol, how} = getSettings()
     listCtrl = WinInfo.getWxObject(:report)
 
-    # # Testing ---------
-    # firstColText = "  " <> "#PID<0.1.0>"
-    # idx = WxReport.findRowIndex(listCtrl, firstColText)
-    # # Logger.info("WxReport.findRowIndex(listCtrl, #{inspect(firstColText)}) => #{inspect(idx)}")
-    #
-    # if idx > 0 do
-    #   Logger.info("itemData = #{inspect(:wxListCtrl.getItemData(listCtrl, idx))}")
-    #   Logger.info("font = #{inspect(:wxListCtrl.getItemFont(listCtrl, idx))}")
-    #
-    #   Logger.info(
-    #     "state = #{inspect(:wxListCtrl.getItemState(listCtrl, idx, @wxLIST_STATE_SELECTED))}"
-    #   )
-    #
-    #   Logger.info("text = #{inspect(:wxListCtrl.getItemText(listCtrl, idx))}")
-    #   Logger.info("itemCount = #{inspect(:wxListCtrl.getItemCount(listCtrl))}")
-    #   Logger.info("itemData = #{inspect(:wxListCtrl.getItemData(listCtrl, idx))}")
-    # end
-    #
-    # # end testing ----------------
-
-    # Get the beam engine per procews data
+    # Get the beam engine per process data
     procData = getProcessData(sortCol, how)
     nProcs = length(procData)
     data = process(procData, [])
     WxStatusBar.setText("#{nProcs} processes")
-    {selected, txt} = WxReport.getSelection(listCtrl)
-    # Logger.info("Selected = #{inspect(selected)}")
+    {_selectedIdx, selectedPid} = WxReport.getSelection(listCtrl)
 
     font = :wxFont.new(14, @wxFONTFAMILY_MODERN, @wxFONTSTYLE_NORMAL, @wxFONTWEIGHT_NORMAL)
 
     # Freeze the window during the update
     :wxWindow.freeze(listCtrl)
-    # addProcsToCtrl(listCtrl, procData)
     WxReport.setReportData(listCtrl, data, font)
-
     :wxWindow.thaw(listCtrl)
 
-    idx = WxReport.findRowIndex(listCtrl, txt)
+    # Maintian the selected row by resetting the selection to the new row
+    # containing the selected pid.
+    idx = WxReport.findRowIndex(listCtrl, selectedPid)
     WxReport.clearSelection(listCtrl)
     WxReport.setSelection(listCtrl, idx)
 
     :timer.sleep(1000)
   end
 
-  # ==============
+  @doc """
+  Process the per process data into a form suitable to display.
+  """
   def process([], data) do
     Enum.reverse(data)
   end
@@ -75,17 +56,16 @@ defmodule WxTopWindowLogic do
     Enum.reverse(rowData)
   end
 
-  def processRow([{key, val} | rest], rowData) do
-    val =
+  def processRow([{_key, val} | rest], rowData) do
       cond do
         val == [] -> processRow(rest, ["" | rowData])
         true -> processRow(rest, ["#{inspect(val)}" | rowData])
       end
   end
 
-  # ===================
-
-  # Get an array containing the process data
+  @doc """
+  Get a sorted array containing the process data
+  """
   def getProcessData(sortBy, how) do
     procData = getData(:erlang.processes(), [])
 
@@ -114,22 +94,22 @@ defmodule WxTopWindowLogic do
     getData(rest, [[{:pid, pid} | data] | procData])
   end
 
-  # Add the process data to the list control
-  def addProcsToCtrl(listCtrl, procData) do
-    :wxListCtrl.deleteAllItems(listCtrl)
-    addProcsToCtrl(listCtrl, procData, 0)
-  end
-
-  # Iterate over the process data list. ---------------------------------------------
-  defp addProcsToCtrl(_listCtrl, [], _) do
-    :ok
-  end
-
-  defp addProcsToCtrl(listCtrl, [row | rest], idx) do
-    addRowData(listCtrl, row, idx)
-    addProcsToCtrl(listCtrl, rest, idx + 1)
-  end
-
+  # # Add the process data to the list control
+  # def addProcsToCtrl(listCtrl, procData) do
+  #   :wxListCtrl.deleteAllItems(listCtrl)
+  #   addProcsToCtrl(listCtrl, procData, 0)
+  # end
+  #
+  # # Iterate over the process data list. ---------------------------------------------
+  # defp addProcsToCtrl(_listCtrl, [], _) do
+  #   :ok
+  # end
+  #
+  # defp addProcsToCtrl(listCtrl, [row | rest], idx) do
+  #   addRowData(listCtrl, row, idx)
+  #   addProcsToCtrl(listCtrl, rest, idx + 1)
+  # end
+  #
   # Get and add the process data for the given PID
   def addRowData(listCtrl, [{_, val} | t], idx) do
     data = "  " <> "#{inspect(val)}"
@@ -201,7 +181,6 @@ defmodule WxTopWindowLogic do
         WxFunctions.closeWindow(:Etop)
         {:stop, :normal, state}
 
-      # :exit -> {:stop, "Exit menu clicked", state}
       _ ->
         {:noreply, state, 1}
     end
@@ -210,6 +189,23 @@ defmodule WxTopWindowLogic do
   # List control event
   def do_command_list_col_click(senderId, col, state) do
     Logger.debug("do_command_list_col_click = #{inspect(senderId)}, #{inspect(col)}")
+    {:noreply, state, 1}
+  end
+
+  def do_list_ctrl_col_click(senderId, col, state) do
+    Logger.debug("do_list_ctrl_col_click = #{inspect(senderId)}, #{inspect(col)}")
+
+    case col do
+      0 -> :ok
+        1 -> :ok
+        2 -> :ok
+        3 -> :ok
+        4 -> :ok
+        5 -> :ok
+        6 -> :ok
+        7 -> :ok
+    end
+
     {:noreply, state, 1}
   end
 

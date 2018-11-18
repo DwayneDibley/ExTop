@@ -48,7 +48,7 @@ defmodule WxReport do
   text in the first column is returned.
   """
   def setSelection(listCtrl, row, clearOldSelection \\ true) do
-    Logger.debug("setSelection(listCtrl, #{inspect(row)}, #{inspect(clearOldSelection)})")
+    # Logger.debug("setSelection(listCtrl, #{inspect(row)}, #{inspect(clearOldSelection)})")
     # idx = :wxListCtrl.getNextItem(listCtrl, -1, state: @wxLIST_STATE_SELECTED)
 
     # if clearOldSelection do
@@ -70,7 +70,7 @@ defmodule WxReport do
 
   def clearSelection(listCtrl) do
     {row, text} = getSelection(listCtrl)
-    Logger.debug("clearSelection(listCtrl) selection=#{inspect(row)}")
+    # Logger.debug("clearSelection(listCtrl) selection=#{inspect(row)}")
 
     if row >= 0 do
       Logger.debug("Deselect row #{inspect(row)}")

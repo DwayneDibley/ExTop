@@ -108,7 +108,7 @@ defmodule WxWinObj.API do
             end
 
           {:EXIT, pid, :normal} ->
-            Logger.info("EXIT received: #{inspect({:EXIT, pid, :normal})}")
+            Logger.debug("EXIT received: #{inspect({:EXIT, pid, :normal})}")
 
           msg ->
             Logger.info("Msg received: #{inspect(msg)}")

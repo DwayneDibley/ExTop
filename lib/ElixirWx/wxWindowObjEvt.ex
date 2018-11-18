@@ -22,7 +22,7 @@ defmodule WxWinObjEvt do
   """
   def frameEvent(senderId, senderObj, event, state) do
     sender = WinInfo.getCtrlName(senderId)
-    Logger.info("Frame event from: #{inspect(sender)}")
+    Logger.debug("Event from #{inspect(sender)}: #{inspect(event)}")
 
     case event do
       {:wxClose, :close_window} ->
@@ -36,9 +36,9 @@ defmodule WxWinObjEvt do
   """
   def menuEvent(senderId, senderObj, event, state) do
     sender = WinInfo.getCtrlName(senderId)
-    Logger.info("Menu event from: #{inspect(sender)}")
+    Logger.debug("Menu event from: #{inspect(sender)}")
     callHandler(state, :do_menu_click, [sender, state])
-    {:noreply, state}
+    # {:noreply, state}
   end
 
   @doc """
@@ -54,10 +54,10 @@ defmodule WxWinObjEvt do
   end
 
   def listCtrlColClick(sender, col, state) do
-    Logger.info("listCtrl click event: sender=#{inspect(sender)} col=#{inspect(col)}")
+    # Logger.info("listCtrl click event: sender=#{inspect(sender)} col=#{inspect(col)}")
 
     callHandler(state, :do_list_ctrl_col_click, [sender, col, state])
-    {:noreply, state}
+    # {:noreply, state}
   end
 
   def handle(evt, state) do
@@ -71,7 +71,7 @@ defmodule WxWinObjEvt do
         apply(state[:logic], handler, args)
 
       false ->
-        Logger.warn("No handler: #{inspect(handler)}(#{inspect(args)}) ")
+        Logger.debug("No event handler: #{inspect(handler)}()")
 
         {:noreply, state}
     end
